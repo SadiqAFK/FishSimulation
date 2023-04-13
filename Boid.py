@@ -5,6 +5,9 @@ import random
 maxVelocity = 2
 
 class Boid:
+
+    #Initialize the boid position
+    #Velocty is randomly assigned
     def __init__(self, x, y):
 
         self.pos = np.array([x,y])
@@ -13,9 +16,13 @@ class Boid:
         self.image = pygame.image.load("boid_circle.png")
         self.original_image = pygame.image.load("boid_circle.png")
 
+        self.seperation_factor = 5
+        self.cohesion_factor = 100
+        self.allignment_factor = 40
 
 
 
+    #Function used to rotate iamge based on velocity vector
     def rotate(self):
 
         #Calculate the direction fo movement from velocity
@@ -27,41 +34,51 @@ class Boid:
 
   
         
-
+    #Reutrn distance between boids
     def distance(self, boid):
         return np.linalg.norm((self.pos - boid.pos))
 
+
+    #Acts as update funciton for Boid
     def move(self):
         print("Pos: ", self.pos)
         print("Vel: ",  self.vel)
+
+        #Ensure boid is moving at safe speed
         if abs(self.vel[0]) > maxVelocity:
             self.vel[0] = maxVelocity/self.vel[0]
         
         if abs(self.vel[1]) > maxVelocity:
             self.vel[1] = maxVelocity/self.vel[1]
         
+        #update position
         self.pos[0] += self.vel[0]
         self.pos[1] += self.vel[1]
 
         #self.rotate()
 
+
+
     def avoid_obstacles(self, obstacles, min_distance):
         for obstacle in obstacles:
+
+            #distance and vector between boid and obstacle
             dist_vec = self.pos - obstacle.pos
             distance = np.linalg.norm(dist_vec)
 
+            #if the boid is within range of the obstacle
             if distance < min_distance:
+
                 # calculate a force vector away from the obstacle
                 force = dist_vec / distance**2
 
                 # apply the force to the boid's velocity
                 self.vel += force
 
-                # limit the magnitude of the boid's velocity to max_speed
-                max_speed = 5
+                # limit the magnitude of the boid's velocity to maxVelocity
                 speed = np.linalg.norm(self.vel)
-                if speed > max_speed:
-                    self.vel *= max_speed / speed
+                if speed > maxVelocity:
+                    self.vel *= maxVelocity / speed
 
 
     def seperation(self, boids, minDistance):
@@ -77,18 +94,26 @@ class Boid:
         for boid in boids:
 
             distance = self.distance(boid)
+
+            #Check if boids are too close together
             if  distance < minDistance:
                 numClose += 1
+
+                #Check how far away boid is in each direction
                 xdiff = (self.pos[0] - boid.pos[0])
                 ydiff = (self.pos[1] - boid.pos[1]) 
 
+                #boid is to the elft of self
                 if xdiff >= 0:
                     xdiff = np.sqrt(minDistance) - xdiff
+                #boid is to right of self
                 elif xdiff < 0:
                     xdiff = -np.sqrt(minDistance) - xdiff
 
+                #boid is under self
                 if ydiff >= 0: 
                     ydiff = np.sqrt(minDistance) - ydiff
+                #boid is over self
                 elif ydiff < 0: 
                     ydiff = -np.sqrt(minDistance) - ydiff
 
@@ -98,8 +123,9 @@ class Boid:
         if numClose == 0:
             return
 
-        self.vel[0] -= distanceX / 5
-        self.vel[1] -= distanceY / 5
+        #5 is the factor for seperation, can be modififed for different behaviour
+        self.vel[0] -= distanceX / self.seperation_factor
+        self.vel[1] -= distanceY / self.seperation_factor
 
     def cohesion(self, boids):
         if len(boids) < 1: return
@@ -117,11 +143,12 @@ class Boid:
         avgX /= len(boids)
         avgY /= len(boids)
 
-        # set our velocity towards the others
+        # set our velocity towards the average
         distance = np.sqrt((avgX * avgX) + (avgY * avgY)) * -1.0
 
-        self.vel[0] -= (avgX / 100)
-        self.vel[1] -= (avgY / 100)    
+        #100 is cohesion factor which can be modified
+        self.vel[0] -= (avgX / self.cohesion_factor)
+        self.vel[1] -= (avgY / self.cohesion_factor)    
 
 
     def allignment(self, boids):
@@ -138,5 +165,5 @@ class Boid:
         avgY /= len(boids)
 
         # set our velocity towards the others
-        self.vel[0] += (avgX / 40)
-        self.vel[1] += (avgY / 40)
+        self.vel[0] += (avgX / self.allignment_factor)
+        self.vel[1] += (avgY / self.allignment_factor)

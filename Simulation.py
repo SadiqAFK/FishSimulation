@@ -17,8 +17,7 @@ obstacles = []
 
 screen = pygame.display.set_mode(size)
 
-ball = pygame.image.load("boid.png")
-ballrect = ball.get_rect()
+
 
 # create boids at random positions
 for i in range(numBoids):
@@ -42,6 +41,8 @@ while 1:
 
 
     if not paused:
+
+        #Compare each boid to eevry other boid
         for boid in boids:
             closeBoids = []
             for otherBoid in boids:
@@ -50,6 +51,7 @@ while 1:
                 if distance < 200:
                     closeBoids.append(otherBoid)
 
+            #4 behaviours to be considered
             boid.avoid_obstacles(obstacles, 100)  
             boid.cohesion(closeBoids)
             boid.allignment(closeBoids)
@@ -74,12 +76,14 @@ while 1:
             boid.move()
 
         screen.fill([135, 206, 235])
+        #Drawing the boids
         for boid in boids:
             boidRect = pygame.Rect(boid.image.get_rect())
             boidRect.x = boid.pos[0]
             boidRect.y = boid.pos[1]
             screen.blit(boid.image, boidRect)
 
+        #draw obstacles
         for obstacle in obstacles:
             obstacle.draw(screen)
         pygame.display.flip()
